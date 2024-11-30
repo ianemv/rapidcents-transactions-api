@@ -30,3 +30,21 @@ php artisan key:generate
 6. Run migrations
 php artisan migrate
 
+## Tessting Setup
+
+1. Create test environment file
+cp .env .env.testing
+
+2. Configure test database in .env.testing
+DB_CONNECTION=mysql
+DB_HOST=db_test
+DB_PORT=3307
+DB_DATABASE=rapidcents_test
+
+3. Run test migrations // optional since test will also run migrations
+php artisan migrate --env=testing
+
+4. Run tests
+- connect to container
+docker-compose exec app bash
+php artisan test

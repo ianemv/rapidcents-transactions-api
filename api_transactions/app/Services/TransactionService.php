@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use Carbon\Carbon;
-
+use \Illuminate\Support\Facades\Log;
 class TransactionService
 {
     public function __construct(
@@ -15,11 +15,12 @@ class TransactionService
     {
         $cardHash = $this->cardService->hashCardNumber($data['card_number']);
         $maskedCard = $this->cardService->maskCardNumber($data['card_number']);
-
+        // Check for duplicate first
         if ($data['card_number'] === '6789012345678901') {
-            if ($this->isDuplicateTransaction($cardHash, $data)) {
+            if ($this->isDuplicateTransaction($data, $maskedCard)) {
                 return response()->json([
-                    'error' => 'Duplicate transaction detected'
+                    'error' => 'Duplicate transaction detected',
+                    'message' => 'A similar transaction was processed within the last 10 minutes'
                 ], 409);
             }
         }
@@ -34,7 +35,7 @@ class TransactionService
             'status' => $this->determineTransactionStatus($data)
         ]);
 
-        \Illuminate\Support\Facades\Log::info('Transaction processed', [
+        Log::info('Transaction processed', [
             'id' => $transaction->id,
             'status' => $transaction->status,
             'amount' => $transaction->amount,
@@ -197,13 +198,17 @@ class TransactionService
         }
         return true;
     }
-    private function isDuplicateTransaction(string $cardHash, array $data): bool
+
+    private function isDuplicateTransaction($data, $maskedCardNumber): bool
     {
-        return Transaction::where('card_hash', $cardHash)
+        $existingTransactions = Transaction::where('masked_card_number', $maskedCardNumber)
             ->where('amount', $data['amount'])
             ->where('currency', $data['currency'])
-            ->where('created_at', '>=', Carbon::now()->subMinutes(10))
-            ->exists();
+            ->where('customer_email', $data['customer_email'])
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->count();
+
+        return $existingTransactions > 0;
     }
 
 }

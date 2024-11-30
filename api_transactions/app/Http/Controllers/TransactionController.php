@@ -16,8 +16,6 @@ class TransactionController extends Controller
 
     public function store(TransactionRequest $request)
     {
-        $transaction = $this->transactionService->processTransaction($request->validated());
-
         return $this->transactionService->processTransaction($request->validated());
     }
 
