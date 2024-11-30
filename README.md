@@ -29,7 +29,7 @@ php artisan key:generate
 
 6. Run migrations
 php artisan migrate
-
+```
 ## Tessting Setup
 
 1. Create test environment file
